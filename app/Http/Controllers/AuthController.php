@@ -4,10 +4,14 @@ namespace App\Http\Controllers;
 
 use App\user;
 use Illuminate\Http\Request;
+use App\Traits\ResponseTrait;
+use App\Enums\ResponseCodeEnums;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
+    use ResponseTrait;
     public function register(Request $request)
     {
         /*
@@ -22,7 +26,7 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            // TODO: the right format for response data
+          return $this->sendResponse($validator->errors(),ResponseCodeEnums::AUTH_REQUEST_VALIDATION_ERROR);
         }
 
         /*
@@ -31,16 +35,19 @@ class AuthController extends Controller
         |--------------------------------------------------------------------------
         */
         try {
-
             $user_created = User::create($validator->validated());
 
-        } catch (\Throwable $th) {
-            // TODO the right format for response data
+        } catch (\Throwable $exception) {
+            return $this->sendResponse($exception->getMessage(), ResponseCodeEnums::AUTH_SERVICE_REQUEST_ERROR);
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | if user creation failed
+        |--------------------------------------------------------------------------
+        */
         if (!$user_created) {
-            // TODO the right format for response data
-            // return response()->json(['message' => 'Failed to create user'], 400);
+            return $this->sendResponse([], ResponseCodeEnums::AUTH_SERVICE_REQUEST_FAILED);
         }
 
         /*
@@ -52,16 +59,10 @@ class AuthController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | authenticate user
-        |--------------------------------------------------------------------------
-        */
-
-
-        /*
-        |--------------------------------------------------------------------------
         | return successful request
         |--------------------------------------------------------------------------
         */
+        return $this->sendResponse([], ResponseCodeEnums::AUTH_REQUEST_SUCCESSFUL);
         // TODO format the right response and send data
     }
 
@@ -79,7 +80,7 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            // TODO: the right format for response data
+            return $this->sendResponse($validator->errors(), ResponseCodeEnums::AUTH_REQUEST_VALIDATION_ERROR);
         }
 
         /*
@@ -87,15 +88,24 @@ class AuthController extends Controller
         | authenticate user
         |--------------------------------------------------------------------------
         */
-        $credentials = $request->only('email', 'password');
-
-        if (!auth()->attempt($credentials)) {
-            // TODO: the right format for response data
-            // return response()->json(['message' => 'User authenticated successfully'], 200);
+        if (!auth()->attempt($request->only("email", "password"))) {
+            return $this->sendResponse([], ResponseCodeEnums::AUTH_SERVICE_REQUEST_FAILED);
         }
-        // TODO: the right format for response data
-        // return response()->json(['message' => 'Invalid credentials'], 401);
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | generate authorization token
+        |--------------------------------------------------------------------------
+        */
+        $user = Auth::user()->createToken('authToken')->plainTextToken;
+
+        /*
+        |--------------------------------------------------------------------------
+        | return successful response
+        |--------------------------------------------------------------------------
+        */
+        return $this->sendResponse(['token' => $user], ResponseCodeEnums::AUTH_REQUEST_SUCCESSFUL);
     }
 
     public function verifyAccount($token){

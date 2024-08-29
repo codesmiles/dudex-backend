@@ -6,6 +6,16 @@ enum ResponseCodeEnums: int
 
     /*
     |--------------------------------------------------------------------------
+    | Auth
+    |--------------------------------------------------------------------------
+    */
+    case AUTH_REQUEST_VALIDATION_ERROR = 1001;
+    case AUTH_SERVICE_REQUEST_FAILED = 1002;
+    case AUTH_SERVICE_REQUEST_ERROR = 1003;
+    case AUTH_REQUEST_SUCCESSFUL = 1004;
+
+    /*
+    |--------------------------------------------------------------------------
     | User
     |--------------------------------------------------------------------------
     */
@@ -29,6 +39,33 @@ enum ResponseCodeEnums: int
     public function toString()
     {
         return match ($this) {
+            /*
+            |--------------------------------------------------------------------------
+            | Auth Response
+            |--------------------------------------------------------------------------
+            */
+            self::AUTH_REQUEST_VALIDATION_ERROR => [
+                'status' => 400,
+                'response_code' => $this,
+                'message' => $this->name
+            ],
+            self::AUTH_SERVICE_REQUEST_ERROR => [
+                'status' => 400,
+                'response_code' => $this,
+                'message' => $this->name
+            ],
+            self::AUTH_SERVICE_REQUEST_FAILED => [
+                'status' => 400,
+                'response_code' => $this,
+                'message' => $this->name
+            ],
+            self::AUTH_REQUEST_SUCCESSFUL => [
+                'status' => 200,
+                'response_code' => $this,
+                'message' => $this->name
+            ],
+
+
             /*
             |--------------------------------------------------------------------------
             | User Response
